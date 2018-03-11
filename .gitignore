@@ -34,6 +34,7 @@ private.properties
 Jade.properties
 nbproject
 build
+out
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

@@ -4,6 +4,12 @@ import jade.core.Profile;
 import jade.core.ProfileImpl;
 import jade.util.leap.Properties;
 import jade.wrapper.*;
+import myAgentForms.AnalysisAgentForm;
+import myAgentForms.ControllerAgentForm;
+import myAgentForms.FootballDataAgentForm;
+import myAgents.AnalysisAgent;
+import myAgents.ControllerAgent;
+import myAgents.FootballDataAgent;
 import org.netbeans.swing.laf.dark.DarkMetalLookAndFeel;
 
 import javax.swing.*;
@@ -14,7 +20,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.stream.Stream;
+import java.util.Objects;
 
 
 public class MainForm extends JFrame
@@ -40,6 +46,7 @@ public class MainForm extends JFrame
     private jade.core.Runtime _jade;
     private ArrayList<JFrame> _openFrames = new ArrayList<>();
     private jade.util.leap.List _activeAgents = new jade.util.leap.ArrayList();
+    private String[] _agents = new String[] { "myAgents.AnalysisAgent", "myAgents.ControllerAgent", "myAgents.FootballDataAgent" };
 
     public static void main(String args[]) throws ClassNotFoundException, IOException, URISyntaxException, IllegalAccessException, UnsupportedLookAndFeelException, InstantiationException
     {
@@ -187,8 +194,8 @@ public class MainForm extends JFrame
         lblAgentType.setHorizontalAlignment(SwingConstants.LEFT);
         lblAgentType.setVerticalAlignment(SwingConstants.CENTER);
 
-        String[] agents = Stream.of(Utils.getClasses("myAgents")).map(Class::getName).filter(n -> !n.contains("$")).toArray(String[]::new);
-        ddlAgentType = new JComboBox(agents);
+        //String[] _agents = Stream.of(Utils.getClasses("myAgents")).map(Class::getName).filter(n -> !n.contains("$")).toArray(String[]::new);
+        ddlAgentType = new JComboBox(_agents);
         ddlAgentType.setFont(new Font("Serif", Font.PLAIN, 16));
         ddlAgentType.setBounds(margin + 200 + gap, margin + 30 * 6 + gap * 6, 200, 30);
         ddlAgentType.setBackground(Color.decode("#101010"));
@@ -286,10 +293,9 @@ public class MainForm extends JFrame
         try
         {
             String agentClassName = (String)ddlAgentType.getSelectedItem();
-            String agentFormClassName = agentClassName.replace("myAgents", "myAgentForms") + "Form";
-            createAgent(agentClassName, agentFormClassName);
+            createAgent(agentClassName);
         }
-        catch (InvocationTargetException | NoSuchMethodException | ControllerException | IllegalAccessException | ClassNotFoundException | InstantiationException ex)
+        catch (IOException | URISyntaxException | InvocationTargetException | NoSuchMethodException | ControllerException | IllegalAccessException | ClassNotFoundException | InstantiationException ex)
         {
             throw new Error(ex);
         }
@@ -299,10 +305,8 @@ public class MainForm extends JFrame
     {
         try
         {
-            String[] agentClassNames = Stream.of(Utils.getClasses("myAgents")).map(Class::getName).filter(n -> !n.contains("$")).toArray(String[]::new);
-            String[] agentFormsClassNames = Utils.arrToJinqStream(agentClassNames).select(n -> n.replace("myAgents", "myAgentForms") + "Form").toArray(String[]::new);
-            for (int i = 0; i < agentClassNames.length; i++)
-                createAgent(agentClassNames[i], agentFormsClassNames[i]);
+            for (String agent : _agents)
+                createAgent(agent);
             if (!Utils.containsAgent(_ac, "Sniffer"))
                 _ac.createNewAgent("Sniffer", "jade.tools.sniffer.Sniffer", null).start();
         }
@@ -312,17 +316,38 @@ public class MainForm extends JFrame
         }
     }
 
-    private void createAgent(String agentClassName, String agentFormClassName) throws StaleProxyException, ClassNotFoundException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException
+    private void createAgent(String agentClassName) throws StaleProxyException, ClassNotFoundException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException, IOException, URISyntaxException
     {
         String agentName = agentClassName.substring(agentClassName.lastIndexOf(".") + 1).trim();
         if (!Utils.containsAgent(_ac, agentName))
         {
-            Agent agent = (Agent)Class.forName(agentClassName).newInstance();
-            _activeAgents.add(agent);
-            JFrame jFrame = (JFrame)Class.forName(agentFormClassName).getConstructor(Agent.class).newInstance(agent);
-            _openFrames.add(jFrame);
-            jFrame.setVisible(true);
-            _ac.acceptNewAgent(agentName, agent).start();
+            if (Objects.equals(agentClassName, "myAgents.AnalysisAgent"))
+            {
+                Agent agent = new AnalysisAgent();
+                _activeAgents.add(agent);
+                JFrame jFrame = new AnalysisAgentForm(agent);
+                _openFrames.add(jFrame);
+                jFrame.setVisible(true);
+                _ac.acceptNewAgent(agentName, agent).start();
+            }
+            else if (Objects.equals(agentClassName, "myAgents.ControllerAgent"))
+            {
+                Agent agent = new ControllerAgent();
+                _activeAgents.add(agent);
+                JFrame jFrame = new ControllerAgentForm(agent);
+                _openFrames.add(jFrame);
+                jFrame.setVisible(true);
+                _ac.acceptNewAgent(agentName, agent).start();
+            }
+            else if (Objects.equals(agentClassName, "myAgents.FootballDataAgent"))
+            {
+                Agent agent = new FootballDataAgent();
+                _activeAgents.add(agent);
+                JFrame jFrame = new FootballDataAgentForm(agent);
+                _openFrames.add(jFrame);
+                jFrame.setVisible(true);
+                _ac.acceptNewAgent(agentName, agent).start();
+            }
         }
     }
 
@@ -331,4 +356,49 @@ public class MainForm extends JFrame
         String[] selItemSplit = Utils.split(ddlAgentType.getSelectedItem().toString(), ".");
         txtAgentName.setText(selItemSplit[selItemSplit.length - 1]);
     }
+
+    //private void btnAddAgent_Click(ActionEvent e)
+    //{
+    //    try
+    //    {
+    //        String agentClassName = (String)ddlAgentType.getSelectedItem();
+    //        String agentFormClassName = agentClassName.replace("myAgents", "myAgentForms") + "Form";
+    //        createAgent(agentClassName, agentFormClassName);
+    //    }
+    //    catch (InvocationTargetException | NoSuchMethodException | ControllerException | IllegalAccessException | ClassNotFoundException | InstantiationException ex)
+    //    {
+    //        throw new Error(ex);
+    //    }
+    //}
+
+    //private void btnAddAllAgents_Click(ActionEvent e)
+    //{
+    //    try
+    //    {
+    //        String[] agentClassNames = Stream.of(Utils.getClasses("myAgents")).map(Class::getName).filter(n -> !n.contains("$")).toArray(String[]::new);
+    //        String[] agentFormsClassNames = Utils.arrToJinqStream(agentClassNames).select(n -> n.replace("myAgents", "myAgentForms") + "Form").toArray(String[]::new);
+    //        for (int i = 0; i < agentClassNames.length; i++)
+    //            createAgent(agentClassNames[i], agentFormsClassNames[i]);
+    //        if (!Utils.containsAgent(_ac, "Sniffer"))
+    //            _ac.createNewAgent("Sniffer", "jade.tools.sniffer.Sniffer", null).start();
+    //    }
+    //    catch (InvocationTargetException | NoSuchMethodException | InstantiationException | IllegalAccessException | ClassNotFoundException | ControllerException | IOException | URISyntaxException ex)
+    //    {
+    //        JOptionPane.showMessageDialog(null, ex.getClass().getName() + ": " + ex.getMessage());
+    //    }
+    //}
+
+    //private void createAgent(String agentClassName, String agentFormClassName) throws StaleProxyException, ClassNotFoundException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException
+    //{
+    //    String agentName = agentClassName.substring(agentClassName.lastIndexOf(".") + 1).trim();
+    //    if (!Utils.containsAgent(_ac, agentName))
+    //    {
+    //        Agent agent = (Agent)Class.forName(agentClassName).newInstance();
+    //        _activeAgents.add(agent);
+    //        JFrame jFrame = (JFrame)Class.forName(agentFormClassName).getConstructor(Agent.class).newInstance(agent);
+    //        _openFrames.add(jFrame);
+    //        jFrame.setVisible(true);
+    //        _ac.acceptNewAgent(agentName, agent).start();
+    //    }
+    //}
 }
