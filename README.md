@@ -24,7 +24,7 @@
 
 ![AnalysisAgent](/Images/AnalysisAgent.png?raw=true "AnalysisAgent")
 
-<b>Download: JadeFootballAnalysis.jar[WPFComputationalGeometry](https://github.com/rvnlord/JadeFootballAnalysis/releases/download/v1.01/JadeFootballAnalysis.zip)</b> <br /> 
+<b>Download: [JadeFootballAnalysis.jar](https://github.com/rvnlord/JadeFootballAnalysis/releases/download/v1.01/JadeFootballAnalysis.zip)</b> <br /> 
 <br /> 
 CRC32: AB4D19B9 <br /> 
 MD5: 49B9914D1FABC88BFD4E2F690FC51C9F <br /> 
